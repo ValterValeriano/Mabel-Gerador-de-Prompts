@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mabel - Gerador Profissional de Prompts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8B5CF6;
+            --secondary: #EC4899;
+            --accent: #06B6D4;
+            --dark: #0F172A;
+            --glass: rgba(255, 255, 255, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: #fff;
+        }
+
+        .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* Animated Background */
+        .bg-mesh {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.3) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(236, 72, 153, 0.3) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.3) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(139, 92, 246, 0.2) 0px, transparent 50%);
+            animation: meshMove 20s ease-in-out infinite;
+        }
+
+        @keyframes meshMove {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(5deg); }
+        }
+
+        /* Glassmorphism */
+        .glass {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Audio Wave Animation */
+        .audio-wave {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            height: 30px;
+        }
+
+        .wave-bar {
+            width: 4px;
+            background: linear-gradient(to top, var(--primary), var(--secondary));
+            border-radius: 2px;
+            animation: wave 1s ease-in-out infinite;
+        }
+
+        .wave-bar:nth-child(1) { height: 20%; animation-delay: 0s; }
+        .wave-bar:nth-child(2) { height: 40%; animation-delay: 0.1s; }
+        .wave-bar:nth-child(3) { height: 60%; animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { height: 40%; animation-delay: 0.3s; }
+        .wave-bar:nth-child(5) { height: 20%; animation-delay: 0.4s; }
+
+        @keyframes wave {
+            0%, 100% { transform: scaleY(0.5); }
+            50% { transform: scaleY(1); }
+        }
+
+        .recording .wave-bar {
+            animation-duration: 0.5s;
+            background: linear-gradient(to top, #ef4444, #f87171);
+        }
+
+        /* Button Glow */
+        .btn-glow {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .btn-glow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-glow::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: 0.5s;
+        }
+
+        .btn-glow:hover::before {
+            left: 100%;
+        }
+
+        /* Input Focus Effect */
+        .input-glow:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(var(--primary), var(--secondary));
+            border-radius: 4px;
+        }
+
+        /* Pulse Animation for Recording */
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        .recording-indicator {
+            position: relative;
+        }
+
+        .recording-indicator::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px solid #ef4444;
+            animation: pulse-ring 1.5s ease-out infinite;
+        }
+
+        /* Typing Effect */
+        .typing-cursor::after {
+            content: '|';
+            animation: blink 1s infinite;
+            color: var(--accent);
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Category Tags */
+        .category-tag {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .category-tag:hover, .category-tag.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Result Card Animation */
+        .result-card {
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Voice Visualizer */
+        .voice-viz {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            height: 40px;
+        }
+
+        .viz-bar {
+            width: 3px;
+            background: linear-gradient(to top, var(--accent), var(--primary));
+            border-radius: 1.5px;
+            transition: height 0.1s ease;
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <div class="bg-mesh"></div>
+
+    <!-- Header -->
+    <header class="glass sticky top-0 z-50 border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center shadow-lg">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-display text-2xl font-bold bg-gradient-to-r from-violet-400 to-pink-400 bg-clip-text text-transparent">
+                        Mabel
+                    </h1>
+                    <p class="text-xs text-gray-400">Gerador Profissional de Prompts</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="audio-wave" id="headerWave">
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                </div>
+                <button onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                    <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-6 py-12">
+        <!-- Hero Section -->
+        <div class="text-center mb-12">
+            <h2 class="font-display text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-white via-violet-200 to-pink-200 bg-clip-text text-transparent">
+                Crie Prompts Perfeitos
+            </h2>
+            <p class="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
+                Fale ou digite. Mabel transforma suas ideias em prompts profissionais otimizados para qualquer IA.
+            </p>
+        </div>
+
+        <!-- Main Interface -->
+        <div class="glass-card rounded-3xl p-8 mb-8">
+            <!-- Category Selection -->
+            <div class="flex flex-wrap gap-3 mb-6 justify-center">
+                <button class="category-tag active px-4 py-2 rounded-full bg-white/10 text-sm font-medium border border-white/10" data-category="geral">
+                    ⚡ Geral
+                </button>
+                <button class="category-tag px-4 py-2 rounded-full bg-white/10 text-sm font-medium border border-white/10" data-category="criativo">
+                    🎨 Criativo
+                </button>
+                <button class="category-tag px-4 py-2 rounded-full bg-white/10 text-sm font-medium border border-white/10" data-category="tecnico">
+                    💻 Técnico
+                </button>
+                <button class="category-tag px-4 py-2 rounded-full bg-white/10 text-sm font-medium border border-white/10" data-category="negocios">
+                    💼 Negócios
+                </button>
+                <button class="category-tag px-4 py-2 rounded-full bg-white/10 text-sm font-medium border border-white/10" data-category="educacao">
+                    📚 Educação
+                </button>
+                <button class="category-tag px-4 py-2 rounded-full bg-white/10 text-sm font-medium border border-white/10" data-category="marketing">
+                    📢 Marketing
+                </button>
+            </div>
+
+            <!-- Input Area -->
+            <div class="relative mb-6">
+                <textarea 
+                    id="inputText" 
+                    class="input-glow w-full h-40 bg-black/30 rounded-2xl p-6 text-white placeholder-gray-500 resize-none border border-white/10 text-lg leading-relaxed"
+                    placeholder="Descreva o que você precisa... ou clique no microfone para falar 🎤"
+                ></textarea>
+
+                <!-- Voice Controls -->
+                <div class="absolute bottom-4 right-4 flex items-center gap-3">
+                    <span id="recordingStatus" class="text-sm text-gray-400 hidden">Gravando...</span>
+                    <button 
+                        id="micBtn" 
+                        onclick="toggleRecording()"
+                        class="btn-glow w-14 h-14 rounded-full bg-gradient-to-br from-violet-600 to-pink-600 flex items-center justify-center shadow-lg border border-white/20"
+                    >
+                        <svg id="micIcon" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                        </svg>
+                        <svg id="stopIcon" class="w-6 h-6 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <rect x="6" y="6" width="12" height="12" rx="2" stroke-width="2"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Voice Visualizer (Hidden by default) -->
+            <div id="voiceViz" class="voice-viz hidden mb-4">
+                <div class="viz-bar" style="height: 10%"></div>
+                <div class="viz-bar" style="height: 30%"></div>
+                <div class="viz-bar" style="height: 50%"></div>
+                <div class="viz-bar" style="height: 70%"></div>
+                <div class="viz-bar" style="height: 90%"></div>
+                <div class="viz-bar" style="height: 70%"></div>
+                <div class="viz-bar" style="height: 50%"></div>
+                <div class="viz-bar" style="height: 30%"></div>
+                <div class="viz-bar" style="height: 10%"></div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-4 justify-center">
+                <button onclick="generatePrompt()" class="btn-glow px-8 py-4 rounded-xl bg-gradient-to-r from-violet-600 to-pink-600 text-white font-semibold text-lg shadow-lg border border-white/20 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    Gerar Prompt Profissional
+                </button>
+                <button onclick="clearAll()" class="px-6 py-4 rounded-xl bg-white/5 text-gray-300 font-medium hover:bg-white/10 transition-all border border-white/10">
+                    Limpar
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="hidden">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-display text-2xl font-bold text-white">Prompts Gerados</h3>
+                <div class="flex gap-2">
+                    <button onclick="speakResult()" class="p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-colors" title="Ouvir">
+                        <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                        </svg>
+                    </button>
+                    <button onclick="copyAll()" class="p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-colors" title="Copiar Tudo">
+                        <svg class="w-5 h-5 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div id="resultsContainer" class="grid gap-4">
+                <!-- Results will be inserted here -->
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div class="mt-12">
+            <h3 class="font-display text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Histórico Recentemente Gerado
+            </h3>
+            <div id="historyList" class="grid gap-3">
+                <div class="text-gray-500 text-center py-8 italic">
+                    Nenhum prompt gerado ainda...
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="glass mt-20 border-t border-white/10">
+        <div class="max-w-5xl mx-auto px-6 py-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-gray-400 text-sm">
+                © 2026 Mabel AI. Todos os direitos reservados.
+            </p>
+            <div class="flex gap-6 text-sm text-gray-400">
+                <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                    Reconhecimento de Voz Ativo
+                </span>
+                <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                    Síntese de Voz Ativa
+                </span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Global Variables
+        let recognition;
+        let isRecording = false;
+        let currentCategory = 'geral';
+        let promptHistory = [];
+        let audioContext;
+        let analyser;
+        let microphone;
+        let javascriptNode;
+
+        // Initialize Speech Recognition
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'pt-BR';
+
+            recognition.onstart = () => {
+                isRecording = true;
+                updateRecordingUI();
+                startVoiceVisualizer();
+            };
+
+            recognition.onend = () => {
+                isRecording = false;
+                updateRecordingUI();
+                stopVoiceVisualizer();
+            };
+
+            recognition.onresult = (event) => {
+                let finalTranscript = '';
+                let interimTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript;
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+
+                const textarea = document.getElementById('inputText');
+                if (finalTranscript) {
+                    textarea.value += finalTranscript + ' ';
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                isRecording = false;
+                updateRecordingUI();
+                stopVoiceVisualizer();
+                alert('Erro no reconhecimento de voz: ' + event.error);
+            };
+        } else {
+            alert('Seu navegador não suporta reconhecimento de voz. Use Chrome ou Edge.');
+        }
+
+        // Category Selection
+        document.querySelectorAll('.category-tag').forEach(tag => {
+            tag.addEventListener('click', () => {
+                document.querySelectorAll('.category-tag').forEach(t => t.classList.remove('active'));
+                tag.classList.add('active');
+                currentCategory = tag.dataset.category;
+            });
+        });
+
+        // Toggle Recording
+        function toggleRecording() {
+            if (!recognition) {
+                alert('Reconhecimento de voz não disponível');
+                return;
+            }
+
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        }
+
+        function updateRecordingUI() {
+            const micBtn = document.getElementById('micBtn');
+            const micIcon = document.getElementById('micIcon');
+            const stopIcon = document.getElementById('stopIcon');
+            const status = document.getElementById('recordingStatus');
+            const headerWave = document.getElementById('headerWave');
+
+            if (isRecording) {
+                micBtn.classList.add('recording-indicator');
+                micIcon.classList.add('hidden');
+                stopIcon.classList.remove('hidden');
+                status.classList.remove('hidden');
+                headerWave.classList.add('recording');
+                document.getElementById('voiceViz').classList.remove('hidden');
+            } else {
+                micBtn.classList.remove('recording-indicator');
+                micIcon.classList.remove('hidden');
+                stopIcon.classList.add('hidden');
+                status.classList.add('hidden');
+                headerWave.classList.remove('recording');
+                document.getElementById('voiceViz').classList.add('hidden');
+            }
+        }
+
+        // Voice Visualizer
+        function startVoiceVisualizer() {
+            const bars = document.querySelectorAll('.viz-bar');
+            bars.forEach((bar, index) => {
+                const animate = () => {
+                    if (!isRecording) return;
+                    const height = Math.random() * 80 + 10;
+                    bar.style.height = height + '%';
+                    setTimeout(animate, 100 + (index * 50));
+                };
+                animate();
+            });
+        }
+
+        function stopVoiceVisualizer() {
+            const bars = document.querySelectorAll('.viz-bar');
+            bars.forEach(bar => {
+                bar.style.height = '10%';
+            });
+        }
+
+        // Generate Professional Prompt
+        function generatePrompt() {
+            const input = document.getElementById('inputText').value.trim();
+            if (!input) {
+                alert('Por favor, digite ou fale algo primeiro!');
+                return;
+            }
+
+            const templates = {
+                geral: [
+                    {
+                        title: 'Prompt Estruturado - Chain of Thought',
+                        content: `Vamos resolver isto passo a passo. Primeiro, analise o seguinte contexto: "${input}". Depois, forneça uma resposta detalhada dividida em: 1) Análise inicial, 2) Pontos principais, 3) Conclusão prática. Pense em voz alta antes de responder.`
+                    },
+                    {
+                        title: 'Prompt de Especialista',
+                        content: `Atue como um especialista sênior com 20 anos de experiência na área relacionada a: "${input}". Forneça insights profundos, melhores práticas do setor e recomendações acionáveis. Use terminologia técnica apropriada mas explique conceitos complexos.`
+                    },
+                    {
+                        title: 'Prompt Criativo - Exploração Livre',
+                        content: `Explore "${input}" de maneiras inovadoras e não convencionais. Apresente 3 perspectivas diferentes: uma conservadora, uma moderada e uma visionária/ disruptiva. Para cada uma, inclua exemplos práticos e potenciais obstáculos.`
+                    }
+                ],
+                criativo: [
+                    {
+                        title: 'Prompt de Brainstorming Criativo',
+                        content: `Gere 10 ideias únicas e criativas sobre: "${input}". Use técnicas de pensamento lateral. Para cada ideia, inclua: conceito, elemento surpreendente, e como implementar. Pense fora da caixa - sem limites!`
+                    },
+                    {
+                        title: 'Prompt de Storytelling',
+                        content: `Crie uma narrativa envolvente sobre: "${input}". Estrutura: Gancho inicial cativante, desenvolvimento com conflito/tensão, clímax emocional, resolução satisfatória. Use descrições sensoriais e diálogos naturais.`
+                    }
+                ],
+                tecnico: [
+                    {
+                        title: 'Prompt de Documentação Técnica',
+                        content: `Documente tecnicamente: "${input}". Inclua: visão geral do sistema, requisitos técnicos, arquitetura/fluxo de dados, implementação passo a passo, exemplos de código comentados, troubleshooting comum. Formato: Markdown técnico.`
+                    },
+                    {
+                        title: 'Prompt de Debugging',
+                        content: `Analise e debugue: "${input}". Passos: 1) Identifique sintomas/problemas, 2) Hipóteses de causa raiz, 3) Testes diagnósticos, 4) Soluções prioritárias (mais prováveis primeiro), 5) Prevenção futura. Seja sistemático.`
+                    }
+                ],
+                negocios: [
+                    {
+                        title: 'Prompt de Estratégia de Negócios',
+                        content: `Desenvolva uma estratégia de negócios para: "${input}". Framework: Análise SWOT, Proposta de Valor Única, Modelo de Receita, Plano de Go-to-Market, KPIs essenciais, Riscos e mitigações. Dados de mercado relevantes.`
+                    },
+                    {
+                        title: 'Prompt de Pitch/Proposta',
+                        content: `Crie um pitch executivo para: "${input}". Estrutura: Problema (dores), Solução (valor), Diferencial competitivo, Tamanho de mercado, Modelo de negócio, Tracção/prova social, Ask/Próximos passos. Tom: confiante mas não arrogante.`
+                    }
+                ],
+                educacao: [
+                    {
+                        title: 'Prompt de Plano de Aula',
+                        content: `Crie um plano de aula completo sobre: "${input}". Componentes: Objetivos de aprendizagem (SMART), Pré-requisitos, Materiais necessários, Estrutura temporal (introdução, desenvolvimento 1/2/3, conclusão), Atividades interativas, Avaliação formativa, Diferenciação para diferentes níveis.`
+                    },
+                    {
+                        title: 'Prompt de Explicação Simplificada',
+                        content: `Explique "${input}" como se eu tivesse 12 anos. Use: analogias do cotidiano, exemplos visuais, linguagem simples mas precisa, verificação de entendimento (quiz rápido), conexões com conhecimento prévio. Evite jargões ou explique-os.`
+                    }
+                ],
+                marketing: [
+                    {
+                        title: 'Prompt de Copywriting',
+                        content: `Crie copy persuasivo para: "${input}". Elementos: Headline impactante (AIDA), Benefícios (não features), Prova social, Urgência/escassez, CTA claro, Objection handling. Tom: ${currentCategory === 'marketing' ? 'adaptável ao público-alvo' : 'profissional mas conversacional'}. Teste variações A/B.`
+                    },
+                    {
+                        title: 'Prompt de Estratégia de Conteúdo',
+                        content: `Desenvolva estratégia de conteúdo para: "${input}". Inclua: Personas de público, Jornada do cliente (awareness→consideration→decision), Calendário editorial (30 dias), Formatos de conteúdo por canal, SEO keywords, Métricas de sucesso, Repurposing strategy.`
+                    }
+                ]
+            };
+
+            const selectedTemplates = templates[currentCategory] || templates.geral;
+            const resultsContainer = document.getElementById('resultsContainer');
+            resultsContainer.innerHTML = '';
+
+            selectedTemplates.forEach((template, index) => {
+                const card = document.createElement('div');
+                card.className = 'glass-card rounded-2xl p-6 result-card cursor-pointer hover:border-violet-500/50 transition-all';
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.onclick = () => copyToClipboard(template.content, card);
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-3">
+                        <h4 class="font-semibold text-violet-300 text-lg">${template.title}</h4>
+                        <span class="text-xs text-gray-500 bg-white/5 px-2 py-1 rounded">Clique para copiar</span>
+                    </div>
+                    <p class="text-gray-300 leading-relaxed text-sm">${template.content}</p>
+                    <div class="mt-4 flex gap-2">
+                        <button onclick="event.stopPropagation(); speakText('${template.content.replace(/'/g, "\'")}')" class="text-xs flex items-center gap-1 text-violet-400 hover:text-violet-300 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                            </svg>
+                            Ouvir
+                        </button>
+                        <button onclick="event.stopPropagation(); copyToClipboard('${template.content.replace(/'/g, "\'")}')" class="text-xs flex items-center gap-1 text-pink-400 hover:text-pink-300 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+                            </svg>
+                            Copiar
+                        </button>
+                    </div>
+                `;
+                resultsContainer.appendChild(card);
+            });
+
+            document.getElementById('resultsSection').classList.remove('hidden');
+
+            // Add to history
+            const historyItem = {
+                input: input.substring(0, 50) + (input.length > 50 ? '...' : ''),
+                category: currentCategory,
+                timestamp: new Date().toLocaleTimeString('pt-BR'),
+                templates: selectedTemplates
+            };
+            promptHistory.unshift(historyItem);
+            updateHistory();
+
+            // Scroll to results
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function updateHistory() {
+            const historyList = document.getElementById('historyList');
+            if (promptHistory.length === 0) return;
+
+            historyList.innerHTML = promptHistory.slice(0, 5).map((item, index) => `
+                <div class="glass-card rounded-xl p-4 flex justify-between items-center hover:bg-white/5 transition-colors cursor-pointer" onclick="restoreHistory(${index})">
+                    <div>
+                        <p class="text-sm text-white font-medium">${item.input}</p>
+                        <p class="text-xs text-gray-500 mt-1">${item.category} • ${item.timestamp}</p>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                </div>
+            `).join('');
+        }
+
+        function restoreHistory(index) {
+            const item = promptHistory[index];
+            document.getElementById('inputText').value = item.input.replace('...', '');
+            currentCategory = item.category;
+            document.querySelectorAll('.category-tag').forEach(t => {
+                t.classList.toggle('active', t.dataset.category === currentCategory);
+            });
+            generatePrompt();
+        }
+
+        // Text to Speech
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'pt-BR';
+                utterance.rate = 0.9;
+                utterance.pitch = 1;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert('Seu navegador não suporta síntese de voz');
+            }
+        }
+
+        function speakResult() {
+            const firstResult = document.querySelector('.result-card p');
+            if (firstResult) {
+                speakText(firstResult.textContent);
+            }
+        }
+
+        // Clipboard Functions
+        function copyToClipboard(text, element) {
+            navigator.clipboard.writeText(text).then(() => {
+                const original = element.innerHTML;
+                element.style.borderColor = '#10B981';
+                const badge = element.querySelector('.text-xs');
+                if (badge) badge.textContent = 'Copiado!';
+
+                setTimeout(() => {
+                    element.style.borderColor = '';
+                    if (badge) badge.textContent = 'Clique para copiar';
+                }, 2000);
+            });
+        }
+
+        function copyAll() {
+            const allText = Array.from(document.querySelectorAll('.result-card p')).map(p => p.textContent).join('\n\n---\n\n');
+            navigator.clipboard.writeText(allText).then(() => {
+                alert('Todos os prompts copiados para a área de transferência!');
+            });
+        }
+
+        function clearAll() {
+            document.getElementById('inputText').value = '';
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('resultsContainer').innerHTML = '';
+        }
+
+        function toggleTheme() {
+            // Theme toggle placeholder - could implement dark/light mode switch
+            alert('Mabel já está no modo escuro premium! 🌙');
+        }
+
+        // Keyboard Shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                generatePrompt();
+            }
+            if (e.ctrlKey && e.key === 'm') {
+                e.preventDefault();
+                toggleRecording();
+            }
+        });
+
+        // Auto-resize textarea
+        const textarea = document.getElementById('inputText');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.max(160, this.scrollHeight) + 'px';
+        });
+    </script>
+</body>
+</html>
